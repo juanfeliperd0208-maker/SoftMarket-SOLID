@@ -1,0 +1,38 @@
+name: CI
+
+# Se ejecuta en cada pull request hacia develop o main y en cada push a esas ramas.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  estilo:
+    name: Estilo (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - name: Análisis estático
+        run: ruff check .
+      - name: Formato
+        run: ruff format --check .
+
+  pruebas:
+    name: Pruebas (pytest)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements-dev.txt
+      - name: Pruebas unitarias con cobertura mínima del 80 %
+        run: pytest -v --cov --cov-report=term-missing
